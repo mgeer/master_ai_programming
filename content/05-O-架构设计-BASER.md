@@ -19,10 +19,6 @@ Outline 阶段要做两件事：先**分析业务**（系统里有什么、怎�
 
 BASER 五要素就是这五个问题的结构化回答。
 
-### 关于本章的提示词示例
-
-本章会展示完整的 CRC 提示词，帮你理解每个要素"该想到哪些事情"。但**实战中不需要写这么多**——在 AI IDE 中，很多上下文可以通过文件引用功能自动提供。每个要素的完整提示词之后，会附上"实战简化版"供参考。
-
 ### BASER 的使用原则
 
 **分步设计**：五个要素逐个完成，每完成一个就让 AI 审查。不要一次性让 AI 生成整个架构。
@@ -72,20 +68,9 @@ graph LR
 **提示词：**
 
 ```
-## Context
-我在设计一个 Todo API，需求文档如下：
-[@docs/requirements.md 或粘贴第四章产出的需求文档]
-
-## Requirement
-请帮我进行业务架构设计：
-1. 识别系统中的核心业务对象，列出每个对象的业务属性
-2. 画出业务对象之间的关系（用 Mermaid 图）
-3. 梳理核心业务流程（用 Mermaid 流程图）
-4. 提取关键业务规则（如权限、数据可见性、状态约束等）
-
-## Constraint
-- 聚焦业务层面的分析，不涉及技术实现（不要出现 id、时间戳、外键等技术字段）
-- 用中文描述
+基于 @docs/requirements.md，帮我进行业务架构设计：
+核心对象及属性、对象关系（Mermaid 图）、业务流程（Mermaid 流程图）、业务规则。
+聚焦业务层面，不涉及技术实现（不要出现 id、时间戳、外键等技术字段）。
 ```
 
 **AI 产出示例：**
@@ -188,31 +173,10 @@ graph TD
 **提示词：**
 
 ```
-## Context
-我在设计 Todo API 的技术架构。业务架构如下：
-[@docs/business-architecture.md 或粘贴上一步的业务架构产出]
-
-## Requirement
-请帮我进行技术架构设计：
-1. 技术选型及理由
-2. 部署策略（单体 / 模块化单体 / 微服务）
-3. 数据库表结构设计（基于业务架构的对象模型，说明对象到表的映射关系）
-4. 代码模块划分（目录结构）
-5. API 接口清单（RESTful 风格）
-
-## Constraint
-- 后端使用 Python，前端使用 Vue
-- 初期用户量小，优先简单可维护
-- 数据库表结构要包含字段类型和索引
+基于 @docs/business-architecture.md 的业务架构，帮我设计技术架构：
+技术选型、部署策略、数据库表结构（含字段类型和索引）、目录结构、API 接口清单。
+后端 Python，前端 Vue，初期用户量小，优先简单可维护。
 ```
-
-> **实战简化版（在 AI IDE 中）：**
->
-> ```
-> 基于 @docs/business-architecture.md 的业务架构，
-> 帮我设计技术架构：技术选型、数据库表结构、目录结构、API 接口清单。
-> 后端 Python，前端 Vue，单体架构，优先简单可维护。
-> ```
 
 **AI 产出示例：**
 
@@ -347,29 +311,10 @@ todo-api/
 **提示词：**
 
 ```
-## Context
-我在设计 Todo API 的安全方案。API 接口清单如下：
-[@docs/tech-architecture.md 或粘贴 A 阶段产出的 API 接口清单]
-
-技术选型：Python + FastAPI + PostgreSQL + PyJWT
-
-## Requirement
-请帮我设计安全方案：
-1. 认证授权流程（JWT），明确哪些接口需要认证、哪些不需要
-2. 数据保护措施
-3. 输入防护清单
-
-## Constraint
-- 给出 JWT 认证的完整流程（用 Mermaid 时序图）
-- 列出具体的安全清单，不要泛泛而谈
+基于 @docs/tech-architecture.md 的接口清单，设计安全方案：
+JWT 认证流程（Mermaid 时序图）、数据保护措施、输入防护清单。
+列出具体的安全清单，不要泛泛而谈。
 ```
-
-> **实战简化版：**
->
-> ```
-> 基于 @docs/tech-architecture.md 的接口清单，设计安全方案：
-> JWT 认证流程（时序图）、数据保护措施、输入防护清单。
-> ```
 
 **AI 产出示例：**
 
@@ -440,18 +385,9 @@ sequenceDiagram
 **提示词：**
 
 ```
-## Context
-我在设计 Todo API 的部署方案。技术栈：Python + FastAPI + PostgreSQL。
-
-## Requirement
-请帮我设计部署环境：
-1. Dockerfile
-2. docker-compose.yml（开发环境，包含 API + 数据库）
-3. 环境变量清单
-
-## Constraint
-- 聚焦开发环境
-- 环境变量不能硬编码在代码里
+为 Todo API（Python + FastAPI + PostgreSQL）设计开发环境部署方案：
+Dockerfile、docker-compose.yml（API + 数据库）、环境变量清单。
+环境变量不能硬编码在代码里。
 ```
 
 **AI 产出示例（关键部分）：**
@@ -530,32 +466,10 @@ volumes:
 **提示词：**
 
 ```
-## Context
-我在为 Todo API 项目制定开发规范。技术栈：Python + FastAPI + SQLAlchemy + Vue 3。
-项目目录结构如下：
-[@docs/tech-architecture.md 或粘贴上面的目录结构]
-
-## Requirement
-请帮我生成一份规则文件，包含：
-1. 编码风格和命名约定
-2. 设计原则要求（SOLID、Clean Code）
-3. 项目结构规范
-4. 错误处理规范
-5. 日志规范
-
-## Constraint
-- 规则要具体可执行，不要写"保持代码质量"这种空话
-- 适用于 Python 后端和 Vue 前端
+为本项目生成规则文件。技术栈：Python FastAPI + Vue 3，目录结构见 @docs/tech-architecture.md。
+包含：编码风格、设计原则（SOLID/Clean Code）、分层规范、错误处理、日志规范。
+规则要具体可执行，不要写"保持代码质量"这种空话。
 ```
-
-> **实战简化版：**
->
-> ```
-> 为本项目生成规则文件。
-> 技术栈：Python FastAPI + Vue 3，目录结构见 @docs/tech-architecture.md。
-> 包含：编码风格、SOLID/Clean Code 原则、分层规范、错误处理、日志规范。
-> 规则要具体可执行，不要空话。
-> ```
 
 **AI 产出示例（规则文件）：**
 

@@ -62,20 +62,8 @@ Todo API 的 CRUD 操作属于简单场景，用自顶向下。
 **提示词：**
 
 ```
-## Context
-我要开始实现 Todo API。技术架构如下：
-[@docs/tech-architecture.md 或粘贴第五章 A 阶段的接口清单和目录结构]
-
-## Requirement
-请帮我将开发工作拆解为独立的小任务：
-1. 列出所有需要实现的任务
-2. 确定开发顺序（考虑依赖关系）
-3. 每个任务要足够小，可以在一次对话中完成
-
-## Constraint
-- 基础设施（数据库连接、项目配置）作为第一个任务
-- 每个任务包含：路由 + 业务逻辑 + 数据库操作
-- 标注任务之间的依赖关系
+基于 @docs/tech-architecture.md，帮我将开发工作拆解为独立的小任务，
+确定开发顺序和依赖关系。基础设施（数据库连接、项目配置）作为第一个任务。
 ```
 
 **AI 产出的任务清单：**
@@ -101,6 +89,8 @@ Todo API 的 CRUD 操作属于简单场景，用自顶向下。
 
 将任务清单保存为 `docs/tasks.md`，后续开发过程中可以用它跟踪进度。
 
+> **任务清单不需要一次拆分到位。** 先拆出当前能看清的任务，开始 TIR 循环。开发过程中发现新需求或遗漏的功能，单独创建一个任务文件（如 `docs/task-batch-delete.md`），描述清楚上下文和要求，然后对它走 TIR。`tasks.md` 是初始计划，不是唯一的任务来源。
+
 ### 启动项目与基础任务（任务 1-4）
 
 任务拆解完成后，在进入详细的 T→I→R 演示之前，先快速搭建项目基础设施。以下基础任务以简略方式呈现，完整的 T→I→R 循环在下面几节以任务 5 为例展开。
@@ -112,31 +102,12 @@ Todo API 的 CRUD 操作属于简单场景，用自顶向下。
 **提示词：**
 
 ```
-## Context
-我在开发 Todo API，技术架构设计如下：
-[@docs/tech-architecture.md 或粘贴技术架构文档]
-
-## Requirement
-请帮我初始化项目：
-1. requirements.txt（含所有依赖和版本号）
-2. app/config.py（从环境变量读取配置）
-3. app/database.py（SQLAlchemy 数据库连接和 Base 模型）
-4. app/main.py（FastAPI 应用入口）
-5. tests/conftest.py（测试基础设施：测试数据库、AsyncClient fixture、认证 fixture）
-
-## Constraint
-- 测试使用 SQLite 测试数据库，和生产环境隔离
-- 每个测试前后自动创建和清理数据表
-- conftest.py 要提供 client（AsyncClient）和 auth_token 两个 fixture
+基于 @docs/tech-architecture.md，帮我初始化项目：
+项目骨架、配置管理、数据库连接、应用入口、测试基础设施。
+测试使用 SQLite 测试数据库，和生产环境隔离，每个测试前后自动建表和清表。
 ```
 
-> **实战简化版：**
->
-> ```
-> 基于 @docs/tech-architecture.md 初始化项目。
-> 生成 requirements.txt、config.py、database.py、main.py、tests/conftest.py。
-> 测试用 SQLite，提供 client 和 auth_token fixture。
-> ```
+AI 会根据技术架构文档自动判断需要哪些文件、用什么目录结构。你不需要列出具体的文件清单——**告诉 AI 目标，让它决定怎么组织**。Constraint 里只放 AI 可能猜错的关键约束（比如测试用 SQLite 隔离）。
 
 **关键产出：tests/conftest.py**
 
@@ -252,45 +223,11 @@ async def test_create_todo_with_only_title_should_use_default_priority(
 **提示词：**
 
 ```
-## Context
-我在开发 Todo API，使用 Python + FastAPI + PostgreSQL。
-API 接口：POST /api/todos
-请求体：{ title, description, priority, due_date }
-认证方式：JWT Token（通过 Header 传递）
-
-需求规则：
-- title 必填，1-100 个字符
-- description 可选，最大 500 字符
-- priority 必填，可选值 high/medium/low，默认 medium
-- due_date 可选，必须是未来日期
-- 创建成功返回 201 和完整的 Todo 对象
-- 未登录返回 401
-
-项目开发规范：
-[@.cursorrules 或粘贴规则文件中的测试相关规范]
-
-## Requirement
-为"创建待办事项"接口编写 pytest 测试代码：
-1. 先列出测试用例矩阵（正常、边界、异常）
-2. 再编写完整的测试代码
-
-## Constraint
-- 使用 pytest + httpx（FastAPI 推荐的异步测试客户端）
-- 测试要能独立运行，使用测试数据库
-- 每个测试函数只测一个场景
-- 测试即文档：函数命名要能看出测试意图（如 test_create_todo_with_empty_title_should_fail）
-- 每个测试函数必须有 docstring，描述测试条件和预期结果
-- 测试数据使用有业务含义的值，不要用 "aaa"、"test123"
+为 POST /api/todos（创建待办事项）编写 pytest 测试。
+需求规则见 @docs/requirements.md，开发规范见规则文件。
+先列出测试用例矩阵（正常、边界、异常），再编写测试代码。
+测试即文档：命名要能看出测试意图，数据要有业务含义。
 ```
-
-> **实战简化版（在 AI IDE 中）：**
->
-> ```
-> 为 POST /api/todos 编写 pytest 测试。
-> 需求规则见 @docs/requirements.md，规范见规则文件。
-> 先列测试用例矩阵，再写测试代码。
-> 测试即文档：命名要清晰、数据要有业务含义。
-> ```
 
 **AI 产出示例：**
 
@@ -395,39 +332,12 @@ async def test_create_todo_without_auth(client: AsyncClient):
 **提示词：**
 
 ```
-## Context
-我在实现 Todo API 的"创建待办事项"功能。
-
-相关文件：
-- @tests/test_create_todo.py（测试代码）
-- @app/models/todo.py（领域模型，已实现）
-- @app/dependencies/auth.py（认证中间件，已实现）
-- @.cursorrules（规则文件，即开发规范）
-
-目录结构参考第五章的架构设计。
-
-## Requirement
-请实现以下文件，让所有测试通过：
-1. app/schemas/todo.py - 请求和响应的 Pydantic 模型
-2. app/services/todo.py - 业务逻辑
-3. app/routers/todos.py - API 路由
-
-## Constraint
-- 严格遵循规则文件中的开发规范
-- routers 层只负责路由，业务逻辑放在 services 层
-- 使用类型注解和 docstring
+实现"创建待办事项"功能，让 @tests/test_create_todo.py 的所有测试通过。
+参考 @docs/tech-architecture.md 的目录结构和规则文件的开发规范。
+routers 只负责路由，业务逻辑放 services 层。
 ```
 
-> 注：以上提示词使用 AI IDE 的文件引用语法（如 Cursor 的 `@`），可以直接引用项目中的文件。如果你的工具不支持此语法，手动粘贴相关文件内容即可。
-
-> **实战简化版：**
->
-> ```
-> 实现"创建待办事项"功能，让 @tests/test_create_todo.py 的所有测试通过。
-> 参考规则文件，routers 只负责路由，业务逻辑放 services 层。
-> ```
->
-> 在 AI IDE 中，AI 会自动读取引用的测试文件和规范，知道你要什么。
+> 注：以上提示词使用 AI IDE 的文件引用语法（如 Cursor 的 `@`），可以直接引用项目中的文件。如果你的工具不支持此语法，手动粘贴相关文件内容即可。AI 会根据测试代码和架构文档自动判断需要创建哪些文件，不需要你逐一列出。
 
 **AI 产出示例（关键部分）：**
 
@@ -561,24 +471,11 @@ pytest tests/test_create_todo.py -v
 **提示词：**
 
 ```
-作为 Code Reviewer，审查以下"创建待办事项"功能的代码：
-- @app/schemas/todo.py
-- @app/services/todo.py
-- @app/routers/todos.py
+作为 Code Reviewer，审查"创建待办事项"功能的代码：
+@app/schemas/todo.py @app/services/todo.py @app/routers/todos.py
 
-从以下维度给出具体改进建议：
-1. 是否符合规则文件中的规范
-2. 分层是否合理（routers/services/models 职责是否清晰）
-3. 错误处理是否完善
-4. 有没有代码坏味道或可以简化的地方
+审查维度：规范合规、分层合理性、错误处理、代码坏味道。
 ```
-
-> **实战简化版：**
->
-> ```
-> 审查"创建待办事项"功能，检查：规范合规、分层合理性、错误处理、代码坏味道。
-> 相关文件：@app/schemas/todo.py @app/services/todo.py @app/routers/todos.py
-> ```
 
 **AI 审查意见示例：**
 
