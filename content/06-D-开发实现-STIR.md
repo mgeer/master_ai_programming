@@ -53,6 +53,8 @@ graph LR
 
 **如何判断用哪种？** 简单标准：如果业务逻辑就是"接收数据、存数据库、返回结果"，用自顶向下；如果业务逻辑有复杂的状态流转、计算规则、多步骤流程，用自底向上。
 
+比如电商的订单模块，价格计算涉及优惠券、满减、会员折扣等复杂规则，就适合自底向上——先实现价格计算的领域逻辑，再包装成订单服务和 API。
+
 Todo API 的 CRUD 操作属于简单场景，用自顶向下。
 
 ### Todo API 示例
@@ -93,19 +95,9 @@ Todo API 的 CRUD 操作属于简单场景，用自顶向下。
 
 **开发顺序**：1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
 
-以上是后端 API 的任务清单。前端（Vue）的开发同样遵循 STIR 流程，拆解方式示例：
-
-| 序号 | 任务 | 依赖 | 说明 |
-|------|------|------|------|
-| F1 | 项目脚手架 | 无 | Vue 3 + TypeScript + Element Plus 初始化 |
-| F2 | 登录/注册页 | F1 | 表单校验、调用 auth API、Token 存储 |
-| F3 | 待办列表页 | F2 | 分页、筛选、调用 todos API |
-| F4 | 创建待办表单 | F3 | 表单组件、提交后刷新列表 |
-| F5 | 编辑/删除/完成 | F3 | 行内操作、确认弹窗 |
-
-每个前端任务同样走 T → I → R 循环（T 阶段使用 Vitest + Vue Test Utils 编写组件测试）。
-
 拆解完成后，每个任务都足够小（一个接口或一个页面），可以在一次对话中完成 T → I → R 循环。
+
+> **前端开发同理**：如果项目包含前端（如 Vue），拆解和开发流程完全一致——按页面/组件拆解任务，每个任务走 T→I→R 循环（T 阶段使用 Vitest + Vue Test Utils 编写组件测试）。本章以后端 API 为例演示，读者可自行用相同的 STIR 流程完成前端部分。
 
 将任务清单保存为 `docs/tasks.md`，后续开发过程中可以用它跟踪进度。
 
@@ -148,76 +140,13 @@ Todo API 的 CRUD 操作属于简单场景，用自顶向下。
 
 **关键产出：tests/conftest.py**
 
-后续所有任务的测试都依赖这个文件，它是最重要的基础设施：
+后续所有任务的测试都依赖这个文件，它是最重要的基础设施。让 AI 生成时，确保它包含以下三个核心 fixture：
 
-```python
-import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+1. **测试数据库隔离**（`setup_database`）：用 SQLite 替代 PostgreSQL，每个测试自动建表和清表，互不干扰
+2. **异步测试客户端**（`client`）：提供 httpx 的 `AsyncClient`，可以像真实客户端一样向 FastAPI 发请求
+3. **认证 Token**（`auth_token`）：自动注册并登录测试用户，返回 JWT Token——后续测试直接用它访问需要认证的接口
 
-from app.main import app
-from app.database import Base, get_db
-
-# 使用 SQLite 测试数据库，和生产环境完全隔离
-SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(
-    SQLALCHEMY_TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-)
-TestingSessionLocal = sessionmaker(bind=engine)
-
-
-def override_get_db():
-    """替换生产数据库连接为测试数据库"""
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
-
-
-@pytest.fixture(autouse=True)
-def setup_database():
-    """每个测试前创建所有表，测试后清理"""
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
-
-
-@pytest_asyncio.fixture
-async def client():
-    """异步测试客户端"""
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as c:
-        yield c
-
-
-@pytest_asyncio.fixture
-async def auth_token(client: AsyncClient):
-    """注册测试用户并登录，返回 JWT Token"""
-    await client.post(
-        "/api/auth/register",
-        json={"email": "test@example.com", "password": "TestPass123"},
-    )
-    response = await client.post(
-        "/api/auth/login",
-        json={"email": "test@example.com", "password": "TestPass123"},
-    )
-    return response.json()["token"]
-```
-
-这段代码做了三件事：
-1. **测试数据库隔离**：用 SQLite 替代 PostgreSQL，每个测试自动建表和清表，互不干扰
-2. **`client` fixture**：提供 httpx 的 `AsyncClient`，可以像真实客户端一样向 FastAPI 发请求
-3. **`auth_token` fixture**：自动注册并登录测试用户，返回 JWT Token——后续测试直接用它访问需要认证的接口
-
-> 注意：`auth_token` fixture 依赖任务 2-3（注册和登录接口）。在完成任务 3 之后，需要认证的测试才能跑通。
+> 注意：`auth_token` fixture 依赖任务 2-3（注册和登录接口）。在完成任务 3 之后，需要认证的测试才能跑通。具体的 conftest.py 代码不需要你自己写——把以上三点作为 Constraint 告诉 AI，它会生成完整的测试基础设施。
 
 #### 任务 2-4：用户认证
 
@@ -601,7 +530,17 @@ async def create(
 pytest tests/test_create_todo.py -v
 ```
 
-**所有测试通过** → 进入 R 阶段。如果有测试失败，先修复再继续。
+**所有测试通过** → 进入 R 阶段。
+
+如果有测试失败，把错误信息反馈给 AI：
+
+```
+以下测试失败了，请分析原因并修复代码：
+
+[粘贴 pytest 的错误输出]
+```
+
+**关键技巧**：把完整的错误输出（包括 traceback 和断言失败信息）给 AI，而不是只说"测试没过"。AI 需要看到具体的错误信息才能精准定位问题。通常 1-2 轮反馈就能修复。
 
 ---
 
@@ -692,6 +631,21 @@ graph TD
 3. **修改**：根据你的指令修改代码
 
 **人做决策，AI 做执行——STIR 的每一步都是这个模式。**
+
+### 任务切换的上下文管理
+
+完成一个任务的 T→I→R 循环后，进入下一个任务时，建议**开一个新对话**。原因是：上一个任务的对话中积累了大量测试代码、审查意见和修改过程，这些信息对新任务是噪音，会干扰 AI 的判断。
+
+新对话的开头，通过 `@` 引用为 AI 提供必要上下文即可：
+
+```
+我在继续开发 Todo API，当前进度见 @docs/tasks.md。
+接下来实现任务 6：GET /api/todos（查询待办事项列表）。
+相关文件：@docs/requirements.md @docs/tech-architecture.md
+已实现的代码：@app/services/todo.py @app/routers/todos.py
+```
+
+不需要把上一个任务的对话内容带过来——**代码在文件里，上下文在文档里**，这就是第五章强调文档产出的价值。
 
 ---
 
