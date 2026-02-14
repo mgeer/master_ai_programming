@@ -149,7 +149,7 @@ graph TD
 - **推荐书籍**：Eric Evans《领域驱动设计》、Vaughn Vernon《实现领域驱动设计》
 - **适用场景**：业务逻辑复杂、多团队协作的大型系统
 
-对于 Todo API 这样的简单项目，轻量级建模足够了。但当你面对复杂业务时，DDD 提供了更强大的分析工具。B 步骤的领域分析也是复杂系统拆解的关键——把大系统拆成若干子域，然后对每个子域分别走 CODE 流程（详见第三章"复杂系统怎么用 CODE"）。
+对于 Todo API 这样的简单项目，轻量级建模足够了。但当你面对复杂业务时，DDD 提供了更强大的分析工具。
 
 ---
 
@@ -163,7 +163,7 @@ graph TD
 1. **技术选型**：编程语言、框架、数据库
 2. **部署策略**：B 阶段识别出的业务领域，在技术上如何组织？单体、模块化单体、还是微服务？
 3. **数据模型**：数据库表结构设计（受技术选型影响）
-4. **模块划分**：代码怎么分层？
+4. **目录结构**：代码怎么分层组织？
 5. **接口设计**：API 的具体定义
 
 > **提示**：A 要素包含的内容较多。对于复杂项目，可以进一步拆分为"技术选型 → 数据模型 → 接口设计"三个子步骤，分别和 AI 对话。简单项目（如 Todo API）可以一步完成。
@@ -176,6 +176,7 @@ graph TD
 基于 @docs/business-architecture.md 的业务架构，帮我设计技术架构：
 技术选型、部署策略、数据库表结构（含字段类型和索引）、目录结构、API 接口清单。
 后端 Python，前端 Vue，初期用户量小，优先简单可维护。
+目录结构建议 DDD 四层架构。
 ```
 
 **AI 产出示例：**
@@ -238,34 +239,35 @@ CREATE INDEX idx_todos_priority ON todos(priority);
 todo-api/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py              # FastAPI 应用入口
-│   ├── config.py             # 配置管理
-│   ├── models/               # 领域模型（使用 SQLAlchemy ORM 映射）
+│   ├── main.py                    # FastAPI 应用入口
+│   ├── config.py                   # 配置管理
+│   ├── interfaces/                 # 接口层：处理外部请求和响应
+│   │   ├── routers/                #   API 路由
+│   │   │   ├── auth.py
+│   │   │   └── todos.py
+│   │   └── schemas/                #   Pydantic 请求/响应模型
+│   │       ├── user.py
+│   │       └── todo.py
+│   ├── application/                # 应用层：业务流程编排
+│   │   ├── auth_service.py
+│   │   └── todo_service.py
+│   ├── domain/                     # 领域层：核心业务模型和规则
 │   │   ├── user.py
 │   │   └── todo.py
-│   ├── schemas/              # Pydantic 请求/响应模型
-│   │   ├── user.py
-│   │   └── todo.py
-│   ├── routers/              # API 路由
-│   │   ├── auth.py
-│   │   └── todos.py
-│   ├── services/             # 业务逻辑
-│   │   ├── auth.py
-│   │   └── todo.py
-│   ├── dependencies/         # 依赖注入（认证等）
-│   │   └── auth.py
-│   └── database.py           # 数据库连接
-├── docs/                     # 设计文档（CODE 各阶段产出）
-│   ├── requirements.md       # C 阶段：需求文档
-│   ├── business-architecture.md  # O-B：业务架构
-│   ├── tech-architecture.md  # O-A：技术架构
-│   └── security-design.md    # O-S：安全设计
-├── tests/                    # 测试
-├── alembic/                  # 数据库迁移
+│   └── infrastructure/             # 基础设施层：数据库、外部服务等
+│       ├── database.py
+│       └── auth.py                 #   认证依赖（JWT 验证等）
+├── docs/                           # 设计文档（CODE 各阶段产出）
+│   ├── requirements.md             #   C 阶段：需求文档
+│   ├── business-architecture.md    #   O-B：业务架构
+│   ├── tech-architecture.md        #   O-A：技术架构
+│   └── security-design.md          #   O-S：安全设计
+├── tests/                          # 测试
+├── alembic/                        # 数据库迁移
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
-└── .cursor/rules/            # 规则文件（Claude Code 中为 CLAUDE.md）
+└── .cursor/rules/                  # 规则文件（Claude Code 中为 CLAUDE.md）
 ```
 
 **5. API 接口清单**
@@ -487,10 +489,10 @@ volumes:
 
 ### 设计原则
 - 遵循单一职责原则：每个模块/类/函数只做一件事
-- routers 层只负责路由和参数校验，不包含业务逻辑
-- services 层负责业务逻辑，通过依赖注入获取数据库 session，封装所有数据操作
-- models 层负责领域模型定义（通过 SQLAlchemy 映射到数据库）
-- schemas 层负责请求/响应的数据校验
+- 接口层（interfaces）：路由和参数校验，不包含业务逻辑
+- 应用层（application）：编排业务流程，协调领域层和基础设施层
+- 领域层（domain）：核心业务模型和业务规则
+- 基础设施层（infrastructure）：数据库连接、认证等技术实现
 
 ### 错误处理
 - 使用 FastAPI 的 HTTPException 返回错误
@@ -620,4 +622,4 @@ Todo API 不需要微服务、不需要消息队列、不需要分布式缓存�
 
 **下一章预告：**
 
-架构设计完成了，下一步开始写代码。第六章进入 **D - Develop（开发实现）**，学习用 STIR 四步法进行测试驱动开发。
+架构设计完成了，下一步开始写代码。第六章进入 **D - Develop（开发实现）**，学习用 STIR 四步法进行行为测试驱动的迭代开发。

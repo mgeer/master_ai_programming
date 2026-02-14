@@ -327,16 +327,16 @@ async def test_create_todo_without_auth(client: AsyncClient):
 ```
 实现"创建待办事项"功能，让 @tests/test_create_todo.py 的所有测试通过。
 参考 @docs/tech-architecture.md 的目录结构和规则文件的开发规范。
-routers 只负责路由，业务逻辑放 services 层。
+接口层（routers）只负责路由，业务逻辑放应用层（application）。
 ```
 
 > 注：以上提示词使用 AI IDE 的文件引用语法（如 Cursor 的 `@`），可以直接引用项目中的文件。如果你的工具不支持此语法，手动粘贴相关文件内容即可。AI 会根据测试代码和架构文档自动判断需要创建哪些文件，不需要你逐一列出。
 
 **AI 产出示例（关键部分）：**
 
-> 以下展示 AI 生成的三个文件。你不需要逐行理解每一行代码——重点看 AI 如何按照架构设计的分层规范（schemas / services / routers）组织代码。
+> 以下展示 AI 生成的三个文件。你不需要逐行理解每一行代码——重点看 AI 如何按照架构设计的四层结构（interfaces / application / domain / infrastructure）组织代码。
 
-**app/schemas/todo.py：**
+**app/interfaces/schemas/todo.py：**
 
 ```python
 from datetime import date
@@ -378,13 +378,13 @@ class TodoResponse(BaseModel):
     created_at: str
 ```
 
-**app/services/todo.py：**
+**app/application/todo_service.py：**
 
 ```python
 from sqlalchemy.orm import Session
 
-from app.models.todo import Todo
-from app.schemas.todo import CreateTodoRequest
+from app.domain.todo import Todo
+from app.interfaces.schemas.todo import CreateTodoRequest
 
 
 def create_todo(db: Session, request: CreateTodoRequest, user_id: int) -> Todo:
@@ -402,16 +402,16 @@ def create_todo(db: Session, request: CreateTodoRequest, user_id: int) -> Todo:
     return todo
 ```
 
-**app/routers/todos.py：**
+**app/interfaces/routers/todos.py：**
 
 ```python
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.dependencies.auth import get_current_user
-from app.schemas.todo import CreateTodoRequest, TodoResponse
-from app.services.todo import create_todo
+from app.infrastructure.database import get_db
+from app.infrastructure.auth import get_current_user
+from app.interfaces.schemas.todo import CreateTodoRequest, TodoResponse
+from app.application.todo_service import create_todo
 
 router = APIRouter(prefix="/api/todos", tags=["todos"])
 
@@ -467,21 +467,21 @@ pytest tests/test_create_todo.py -v
 
 ```
 作为 Code Reviewer，审查"创建待办事项"功能的代码：
-@app/schemas/todo.py @app/services/todo.py @app/routers/todos.py
+@app/interfaces/schemas/todo.py @app/application/todo_service.py @app/interfaces/routers/todos.py
 
 审查维度：规范合规、分层合理性、错误处理、代码坏味道。
 ```
 
 **AI 审查意见示例：**
 
-> **问题 1：services 层缺少异常处理**
+> **问题 1：应用层缺少异常处理**
 > `create_todo` 函数中 `db.commit()` 可能抛出数据库异常（如唯一约束冲突），但没有 try-except。建议捕获 `SQLAlchemyError` 并抛出明确的业务异常。
 >
 > **问题 2：TodoResponse 的 created_at 类型不够精确**
 > `created_at: str` 应该改为 `created_at: datetime`，让 Pydantic 自动序列化，避免手动格式转换。
 >
 > **问题 3：建议补充**
-> services 层的 `create_todo` 函数建议增加日志记录（符合规则文件中"关键业务操作记录 INFO 日志"的要求）。
+> 应用层的 `create_todo` 函数建议增加日志记录（符合规则文件中"关键业务操作记录 INFO 日志"的要求）。
 
 **根据审查意见修改后，重新运行测试确保仍然通过：**
 
@@ -502,7 +502,7 @@ graph TD
     S["当前任务：POST /api/todos"] -.-> T1["T: 设计测试用例矩阵（9 个用例）"]
     T1 --> T2["T: 生成 pytest 测试代码"]
     T2 --> T3["运行测试 → 全部失败（正常）"]
-    T3 --> I1["I: 实现 schemas + services + routers"]
+    T3 --> I1["I: 实现 schemas + application + routers"]
     I1 --> I2["运行测试 → 全部通过"]
     I2 --> R1["R: Code Reviewer 审查代码"]
     R1 --> R2["根据审查意见修改"]
@@ -534,7 +534,7 @@ graph TD
 我在继续开发 Todo API，当前进度见 @docs/tasks.md。
 接下来实现任务 6：GET /api/todos（查询待办事项列表）。
 相关文件：@docs/requirements.md @docs/tech-architecture.md
-已实现的代码：@app/services/todo.py @app/routers/todos.py
+已实现的代码：@app/application/todo_service.py @app/interfaces/routers/todos.py
 ```
 
 不需要把上一个任务的对话内容带过来——**代码在文件里，上下文在文档里**，这就是第五章强调文档产出的价值。
