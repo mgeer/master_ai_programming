@@ -47,7 +47,7 @@ graph LR
 | A | 技术上怎么实现？ | 技术选型 + 数据模型 + 接口设计 |
 | S | 安全上怎么保障？ | 认证授权方案 + 安全清单 |
 | E | 怎么部署和运行？ | 容器配置 + 环境管理 |
-| R | 代码怎么组织和规范？ | 规则文件（如 `.cursorrules`） |
+| R | 代码怎么组织和规范？ | 规则文件（如 `.cursor/rules/`） |
 
 **五个要素有先后关系**：业务架构决定技术架构，技术架构影响安全设计和部署方案，最后制定开发规范。
 
@@ -300,7 +300,7 @@ todo-api/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
-└── .cursorrules              # 规则文件（Claude Code 中为 CLAUDE.md）
+└── .cursor/rules/            # 规则文件（Claude Code 中为 CLAUDE.md）
 ```
 
 **5. API 接口清单**
@@ -415,6 +415,9 @@ sequenceDiagram
 | 参数篡改 | 使用 Pydantic 严格校验请求参数类型和范围 |
 | 越权访问 | 每个接口校验 `todo.user_id == current_user.id` |
 | 暴力破解 | 登录接口增加频率限制（可选） |
+| CORS | 配置允许的前端域名，限制跨域请求来源 |
+
+> **注意**：本项目是 Vue + FastAPI 前后端分离架构，**必须配置 CORS**（跨域资源共享），否则前端无法调用后端 API。在 FastAPI 中通过 `CORSMiddleware` 配置，开发环境可允许 `localhost`，生产环境应限制为具体域名。
 
 审查确认后，将安全设计保存为 `docs/security-design.md`。
 
@@ -519,7 +522,7 @@ volumes:
 
 开发规范回答的问题是：**代码怎么写才统一、可维护？**
 
-这一步的特殊之处在于：产出物不仅是文档，还要**固化为规则文件**。规则文件是 AI 编程工具的一个通用概念——你把项目规范写进去，AI 在后续每次对话中都会自动读取并遵循，不需要每次都重复说。在 Cursor 中叫 `.cursorrules`，在 Claude Code 中叫 `CLAUDE.md`（详见前言的工具映射表）。本书统一称为"规则文件"，示例以 `.cursorrules` 为例。
+这一步的特殊之处在于：产出物不仅是文档，还要**固化为规则文件**。规则文件是 AI 编程工具的一个通用概念——你把项目规范写进去，AI 在后续每次对话中都会自动读取并遵循，不需要每次都重复说。在 Cursor 中放在 `.cursor/rules/` 目录下，在 Claude Code 中叫 `CLAUDE.md`（详见前言的工具映射表）。本书统一称为"规则文件"。
 
 ### Todo API 示例
 
@@ -570,7 +573,7 @@ volumes:
 ### 设计原则
 - 遵循单一职责原则：每个模块/类/函数只做一件事
 - routers 层只负责路由和参数校验，不包含业务逻辑
-- services 层负责业务逻辑，不直接操作数据库 session
+- services 层负责业务逻辑，通过依赖注入获取数据库 session，封装所有数据操作
 - models 层负责数据库模型定义
 - schemas 层负责请求/响应的数据校验
 
@@ -603,7 +606,7 @@ volumes:
 
 ### 规范的价值
 
-这份规则文件放在项目根目录后（Cursor 中命名为 `.cursorrules`，Claude Code 中命名为 `CLAUDE.md`），AI 在后续每一次对话中都会自动读取并遵循。你不需要每次都说"用 PEP 8"、"要有类型注解"——AI 会自动做到。
+这份规则文件放在项目中后（Cursor 中放在 `.cursor/rules/` 目录下，Claude Code 中命名为 `CLAUDE.md`），AI 在后续每一次对话中都会自动读取并遵循。你不需要每次都说"用 PEP 8"、"要有类型注解"——AI 会自动做到。
 
 **开发规范不只是约束，更是效率工具。**
 

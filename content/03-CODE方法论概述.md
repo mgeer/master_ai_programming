@@ -162,7 +162,7 @@ CODE 不是"走一遍就结束"的流水线。实际开发中，你经常需要�
 | O-A | 技术架构 | `docs/tech-architecture.md` |
 | O-S | 安全设计 | `docs/security-design.md` |
 | O-E | 部署配置 | `docker-compose.yml` 等 |
-| O-R | 开发规范 | 规则文件（如 `.cursorrules`） |
+| O-R | 开发规范 | 规则文件（如 `.cursor/rules/`） |
 | D-S | 任务清单 | `docs/tasks.md` |
 | D | 测试代码 | 取决于技术栈（如 `tests/`） |
 | D | 功能代码 | 取决于技术栈（如 `app/`、`src/`） |
@@ -179,7 +179,7 @@ project/
 │   ├── security-design.md         # O-S：安全设计
 │   ├── tasks.md                   # D-S：任务拆解清单
 │   └── evaluation.md              # E：评估报告
-├── .cursorrules                   # O-R：规则文件
+├── .cursor/rules/                 # O-R：规则文件
 ├── docker-compose.yml             # O-E：部署配置
 ├── app/                           # 功能代码
 └── tests/                         # 测试代码
