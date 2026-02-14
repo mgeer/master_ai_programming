@@ -62,7 +62,7 @@ Todo API 的 CRUD 操作属于简单场景，用自顶向下。
 ```
 ## Context
 我要开始实现 Todo API。技术架构如下：
-[粘贴第五章 A 阶段的接口清单和目录结构]
+[@docs/tech-architecture.md 或粘贴第五章 A 阶段的接口清单和目录结构]
 
 ## Requirement
 请帮我将开发工作拆解为独立的小任务：
@@ -122,7 +122,7 @@ Todo API 的 CRUD 操作属于简单场景，用自顶向下。
 ```
 ## Context
 我在开发 Todo API，技术架构设计如下：
-[粘贴或引用 @docs/tech-architecture.md]
+[@docs/tech-architecture.md 或粘贴技术架构文档]
 
 ## Requirement
 请帮我初始化项目：
@@ -338,7 +338,7 @@ API 接口：POST /api/todos
 - 未登录返回 401
 
 项目开发规范：
-[粘贴规则文件中的测试相关规范]
+[@.cursorrules 或粘贴规则文件中的测试相关规范]
 
 ## Requirement
 为"创建待办事项"接口编写 pytest 测试代码：

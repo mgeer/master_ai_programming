@@ -73,7 +73,7 @@ graph LR
 ```
 ## Context
 我在设计一个 Todo API，需求文档如下：
-[粘贴第四章产出的需求文档]
+[@docs/requirements.md 或粘贴第四章产出的需求文档]
 
 ## Requirement
 请帮我进行业务架构设计：
@@ -189,7 +189,7 @@ graph TD
 ```
 ## Context
 我在设计 Todo API 的技术架构。业务架构如下：
-[粘贴上一步的业务架构产出]
+[@docs/business-architecture.md 或粘贴上一步的业务架构产出]
 
 ## Requirement
 请帮我进行技术架构设计：
@@ -348,7 +348,7 @@ todo-api/
 ```
 ## Context
 我在设计 Todo API 的安全方案。API 接口清单如下：
-[粘贴 A 阶段产出的 API 接口清单]
+[@docs/tech-architecture.md 或粘贴 A 阶段产出的 API 接口清单]
 
 技术选型：Python + FastAPI + PostgreSQL + PyJWT
 
@@ -529,7 +529,7 @@ volumes:
 ## Context
 我在为 Todo API 项目制定开发规范。技术栈：Python + FastAPI + SQLAlchemy + Vue 3。
 项目目录结构如下：
-[粘贴上面的目录结构]
+[@docs/tech-architecture.md 或粘贴上面的目录结构]
 
 ## Requirement
 请帮我生成一份规则文件，包含：
@@ -638,7 +638,7 @@ volumes:
 
 ```
 请审查以下五份架构设计文档的一致性：
-[粘贴 BASER 五个要素的产出]
+[@docs 目录下的 BASER 五份文档，或粘贴五个要素的产出]
 
 检查：
 1. 各文档之间是否有矛盾？
