@@ -23,8 +23,39 @@
         depth: 6
       },
       auto2top: true,
-      coverpage: false
+      coverpage: false,
+      markdown: {
+        renderer: {
+          code: function (code, lang) {
+            if (lang === 'mermaid') {
+              return '<div class="mermaid">' + code + '</div>';
+            }
+            return this.origin.code.apply(this, arguments);
+          }
+        }
+      }
     };
+  </script>
+
+  <!-- Mermaid -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>
+    // 初始化 mermaid
+    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+    // 每次页面内容更新后渲染 mermaid 图表
+    var observer = new MutationObserver(function () {
+      var els = document.querySelectorAll('.mermaid');
+      els.forEach(function (el) {
+        if (el.getAttribute('data-processed')) return;
+        try {
+          mermaid.run({ nodes: [el] });
+        } catch (e) {
+          console.error('Mermaid render error:', e);
+        }
+      });
+    });
+    observer.observe(document.getElementById('app'), { childList: true, subtree: true });
   </script>
 
   <!-- Docsify 核心 -->
