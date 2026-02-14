@@ -276,7 +276,7 @@ todo-api/
 │   ├── __init__.py
 │   ├── main.py              # FastAPI 应用入口
 │   ├── config.py             # 配置管理
-│   ├── models/               # 数据库模型
+│   ├── models/               # 领域模型（使用 SQLAlchemy ORM 映射）
 │   │   ├── user.py
 │   │   └── todo.py
 │   ├── schemas/              # Pydantic 请求/响应模型
@@ -575,7 +575,7 @@ volumes:
 - 遵循单一职责原则：每个模块/类/函数只做一件事
 - routers 层只负责路由和参数校验，不包含业务逻辑
 - services 层负责业务逻辑，通过依赖注入获取数据库 session，封装所有数据操作
-- models 层负责数据库模型定义
+- models 层负责领域模型定义（通过 SQLAlchemy 映射到数据库）
 - schemas 层负责请求/响应的数据校验
 
 ### 错误处理

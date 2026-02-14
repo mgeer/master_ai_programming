@@ -400,7 +400,7 @@ async def test_create_todo_without_auth(client: AsyncClient):
 
 相关文件：
 - @tests/test_create_todo.py（测试代码）
-- @app/models/todo.py（数据库模型，已实现）
+- @app/models/todo.py（领域模型，已实现）
 - @app/dependencies/auth.py（认证中间件，已实现）
 - @.cursorrules（规则文件，即开发规范）
 
