@@ -503,7 +503,7 @@ AI 产出的初版通常长这样（节选）：
 
 **5. 有没有混入技术实现？**
 
-如果规范里出现了"用 SQLAlchemy 查询"、"返回 JSON 格式"、"使用 bcrypt 加密"——这些是实现细节，不应该出现在功能规范里。它们属于 Constitution（规矩）或 Plan（设计方案）。
+如果规范里出现了"用 SQLAlchemy 查询"、"返回 JSON 格式"、"使用 bcrypt 哈希"——这些是实现细节，不应该出现在功能规范里。它们属于 Constitution（规矩）或 Plan（设计方案）。
 
 > **产出物保存路径**：`.spec/features/001-todo-core/spec.md`
 

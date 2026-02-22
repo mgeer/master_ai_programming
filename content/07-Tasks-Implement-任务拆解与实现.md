@@ -19,7 +19,7 @@
 | Tasks | 把 Plan 拆解为可执行的任务列表 | `tasks.md` |
 | Implement | 对每个任务走 Test → Implement → Review 循环 | 测试代码 + 功能代码 |
 
-打个比方：Plan 是建筑图纸，Tasks 是施工计划（先打地基、再砌墙、再装水电），Implement 是按施工计划一步步动工。
+打个比方：Plan 是菜谱（用什么食材、什么火候），Tasks 是备菜清单（先洗菜、再切肉、再调酱汁），Implement 是按清单一步步下锅。
 
 > **本章的案例**：继续用 Todo 应用的 Feature 1（CRUD + 认证授权 + 筛选分页），基于前面产出的 `@spec.md`、`@plan.md` 和 `@constitution.md`。
 
@@ -292,14 +292,15 @@ Test 阶段做的事情：**为这个任务设计测试场景，然后写测试�
 
 测试场景从哪来？从 spec 的验收标准来。打开 `spec.md`，找到和"创建 Todo"相关的验收标准：
 
-- AC-7：创建 Todo 提供标题，返回完整 Todo 对象，状态码 201
-- AC-8：创建 Todo 不提供标题，返回验证错误，状态码 422
-- AC-9：创建 Todo 标题超过 200 字符，返回验证错误，状态码 422
-- AC-27：创建 Todo 标题为纯空格，返回 422
-- AC-28：创建 Todo 描述超过 1000 字符，返回 422
-- AC-6：不携带 token 访问受保护接口，返回 401
+- AC-9：创建 Todo 提供标题，返回完整 Todo 对象，状态码 201
+- AC-10：创建 Todo 不提供标题，返回验证错误，状态码 422
+- AC-11：创建 Todo 标题超过 200 字符，返回验证错误，状态码 422
+- AC-26：创建 Todo 标题为纯空格，返回 422
+- AC-7：不携带 Token 访问受保护接口，返回 401
 
-这六条验收标准就是我们的测试场景。
+另外，spec 的 FR-3 规定描述最多 1000 字符，虽然没有单独的 AC 编号，也要作为测试场景覆盖。
+
+这六条验收标准加上描述超长的边界场景，就是我们的测试场景。
 
 Constitution 定了用 BDD 风格设计测试（Given-When-Then），所以测试用例应该这样组织：
 - Given：一个已认证的用户
@@ -312,7 +313,7 @@ Constitution 定了用 BDD 风格设计测试（Given-When-Then），所以测�
 为 Task 8（创建 Todo）编写测试。
 
 参考：
-- 验收标准：@spec.md 的 AC-6, AC-7, AC-8, AC-9, AC-27, AC-28
+- 验收标准：@spec.md 的 AC-7, AC-9, AC-10, AC-11, AC-26 + FR-3（描述长度）
 - API 契约：@plan.md 的 POST /api/v1/todos
 - 测试规范：@constitution.md 的开发方法论（BDD 风格、pytest）
 - 测试基础设施：@tests/conftest.py
@@ -425,7 +426,7 @@ class TestCreateTodo:
 
 审查测试代码时注意：
 
-- **是否覆盖了所有相关的验收标准？** AC-6、AC-7、AC-8、AC-9、AC-27、AC-28 ——逐条对照，每条至少有一个测试用例。
+- **是否覆盖了所有相关的验收标准？** AC-7、AC-9、AC-10、AC-11、AC-26 ——逐条对照，每条至少有一个测试用例。描述超长虽然没有独立 AC 编号，也要有测试。
 - **测试场景是否包含正常和异常？** 不能全是 happy path。上面的七个测试覆盖了 2 个正常场景和 5 个异常场景——合理。
 - **断言是否充分？** 不能只断言状态码。创建成功后要检查返回体的各个字段：title、description、status、id、created_at。
 - **测试之间是否独立？** 每个测试用例不应依赖其他测试的结果。如果 AI 写的测试有顺序依赖——需要改。
@@ -505,7 +506,7 @@ class TodoService:
     def __init__(self, session: AsyncSession):
         self.repository = TodoRepository(session)
 
-    async def create_todo(self, title: str, description: str | None, user_id: int) -> Todo:
+    async def create_todo(self, title: str, description: str | None, user_id: UUID) -> Todo:
         todo = Todo(
             title=title,
             description=description,
@@ -594,7 +595,7 @@ AI 产出示例：
 >
 > 2. **错误消息国际化**：`field_validator` 里的错误消息是中文 `"标题不能为空"`。如果 API 面向国际用户，建议改为英文。但对于本项目（中文 Todo 应用），中文错误消息是合理的。
 >
-> 3. **测试补充建议**：可以增加一个测试——创建成功后的 Todo 状态一定是 `pending`，且 `user_id` 是当前用户的 ID。虽然 AC-7 已经覆盖了部分，但显式验证 `user_id` 更安全。
+> 3. **测试补充建议**：可以增加一个测试——创建成功后的 Todo 状态一定是 `pending`，且 `user_id` 是当前用户的 ID。虽然 AC-9 已经覆盖了部分，但显式验证 `user_id` 更安全。
 
 #### 审
 
@@ -619,16 +620,15 @@ AI 产出示例：
 
 用户注册涉及认证安全，spec 里有大量相关的验收标准：
 
-- AC-1：合法邮箱和密码注册成功，返回 201
+- AC-1：合法邮箱和密码注册成功，返回 201，响应包含 access token
 - AC-2：已注册邮箱再次注册，返回 409
-- AC-23：无效邮箱格式注册，返回 422
-- AC-24：密码少于 8 位，返回 422
-- AC-25：注册成功后响应包含 access token
+- AC-3：无效邮箱格式注册，返回 422
+- AC-4：密码少于 8 位，返回 422
 
 另外，Plan 里的安全设计给了我们额外的约束：
 
 - `plan.md` 的注册流程：校验 → 查重 → 哈希 → 入库 → 返回
-- `constitution.md` 的安全策略：密码用 bcrypt 加密，响应不含密码字段
+- `constitution.md` 的安全策略：密码用 bcrypt 哈希，响应不含密码字段
 - `spec.md` 的 Clarify 决策：邮箱不区分大小写，注册后自动登录
 
 这些约束都要体现在测试里。
@@ -639,9 +639,9 @@ AI 产出示例：
 为 Task 4（用户注册）编写测试。
 
 参考：
-- 验收标准：@spec.md 的 AC-1, AC-2, AC-23, AC-24, AC-25
+- 验收标准：@spec.md 的 AC-1, AC-2, AC-3, AC-4
 - 注册流程：@plan.md 的认证流程设计
-- 安全策略：@constitution.md（密码 bcrypt 加密、响应不含密码）
+- 安全策略：@constitution.md（密码 bcrypt 哈希、响应不含密码）
 - Clarify 决策：邮箱不区分大小写、注册后自动返回 token
 
 测试应覆盖：
@@ -892,7 +892,7 @@ AI 产出示例：
 > **安全审查结果**
 >
 > **✅ 通过**
-> - 密码用 bcrypt 加密，cost factor 12，符合 Constitution
+> - 密码用 bcrypt 哈希，cost factor 12，符合 Constitution
 > - 响应不包含密码或密码哈希
 > - 邮箱统一转小写后再查重和存储
 > - 重复邮箱返回通用错误信息，不暴露已注册用户列表
@@ -933,7 +933,7 @@ Task 8（创建 Todo）和 Task 4（用户注册）我们做了完整演示。�
 | 任务 | 要点 | 状态 |
 |------|------|------|
 | Task 3：User 模型 | SQLAlchemy 模型、迁移脚本 | ✅ 完成 |
-| Task 4：用户注册 | bcrypt 加密、邮箱查重、自动登录返回 Token（本章已演示） | ✅ 完成 |
+| Task 4：用户注册 | bcrypt 哈希、邮箱查重、自动登录返回 Token（本章已演示） | ✅ 完成 |
 | Task 5：用户登录 | 密码验证、JWT 生成、统一错误信息 | ✅ 完成 |
 | Task 6：认证中间件 | get_current_user 依赖、Token 解析 | ✅ 完成 |
 | Task 13：Token 刷新 | Refresh Token 生成与验证 | ✅ 完成 |
@@ -1071,17 +1071,15 @@ AI 产出示例：
 >
 > | 分类 | AC 编号 | 描述 | 对应测试 | 状态 |
 > |------|--------|------|---------|------|
-> | 认证 | AC-1 | 合法邮箱和密码注册，返回 201 | test_register_success | ✅ |
-> | 认证 | AC-2 | 已注册邮箱再次注册，返回 409 | test_register_duplicate_email | ✅ |
-> | 认证 | AC-3 ~ 5 | 登录成功/失败场景 | test_login_* | ✅ |
-> | 认证 | AC-6 | 无 token 访问返回 401 | test_create_todo_unauthenticated | ✅ |
-> | 认证 | AC-23 ~ 26 | 注册校验 + 邮箱大小写 | test_register_* | ✅ |
-> | CRUD | AC-7 ~ 9 | 创建 Todo 正常/异常 | test_create_todo_* | ✅ |
-> | CRUD | AC-10 ~ 14 | 查看/修改/删除 | test_get/update/delete_todo_* | ✅ |
-> | CRUD | AC-27 ~ 29 | 标题纯空格/描述超长/重复删除 | test_create/delete_todo_* | ✅ |
-> | 授权 | AC-15 ~ 17 | 跨用户操作返回 404 | test_*_other_user_todo | ✅ |
-> | 筛选 | AC-18 ~ 22 | 筛选/分页/元信息 | test_filter/pagination_* | ✅ |
-> | 筛选 | AC-30 ~ 32 | 时间范围/排序/超页码 | test_filter/sort/page_* | ✅ |
+> | 注册 | AC-1, AC-2 | 注册成功 / 重复注册 | test_register_success, test_register_duplicate_email | ✅ |
+> | 注册校验 | AC-3, AC-4 | 邮箱格式 / 密码长度 | test_register_invalid_email, test_register_short_password | ✅ |
+> | 登录 | AC-5, AC-6 | 登录成功 / 失败 | test_login_* | ✅ |
+> | 认证 | AC-7, AC-8 | 无 Token / 过期 Token 返回 401 | test_create_todo_unauthenticated | ✅ |
+> | 创建 | AC-9 ~ 11 | 创建 Todo 正常 / 异常 | test_create_todo_* | ✅ |
+> | 查改删 | AC-12 ~ 19 | 查看 / 修改 / 删除 + 授权（跨用户返回 404） | test_get/update/delete_todo_* | ✅ |
+> | 筛选分页 | AC-20 ~ 25 | 状态筛选 / 分页 / 空列表 / 排序 | test_filter/pagination_* | ✅ |
+> | 边界 | AC-26 ~ 29 | 纯空格标题 / 分页边界 / 重复删除 | test_create/delete_todo_* | ✅ |
+> | 筛选排序 | AC-30 ~ 32 | 时间范围 / 自定义排序 | test_filter/sort_* | ✅ |
 > | 刷新 | AC-33 ~ 35 | Refresh Token 相关 | test_refresh_token_* | ✅ |
 >
 > **总结**：35 条验收标准全部通过 ✅
@@ -1092,7 +1090,7 @@ AI 产出示例：
 
 - **所有 AC 都有对应测试吗？** 如果有 AC 没有对应测试，说明 Tasks 阶段就遗漏了。现在还能补，比验收时才发现好。
 - **测试真的通过了吗？** 不要只看 AI 打的 ✅。实际跑一遍 `pytest`，用测试结果来确认。
-- **有没有 AC 被映射到了错误的测试？** 比如 AC-6（未认证返回 401）对应的是 `test_create_todo_unauthenticated`——但这只测了创建接口。其他受保护接口（查看、修改、删除）也需要测试 401 场景吗？严格来说需要，但在 Todo 应用中，只要认证中间件正确工作，一个接口测了就够了。
+- **有没有 AC 被映射到了错误的测试？** 比如 AC-7（未携带 Token 返回 401）对应的是 `test_create_todo_unauthenticated`——但这只测了创建接口。其他受保护接口（查看、修改、删除）也需要测试 401 场景吗？严格来说需要，但在 Todo 应用中，只要认证中间件正确工作，一个接口测了就够了。
 - **整体覆盖率如何？** Constitution 要求 ≥ 80%。跑一下覆盖率报告，确认达标。
 
 ```
