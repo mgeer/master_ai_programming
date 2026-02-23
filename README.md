@@ -4,7 +4,7 @@
 
 > 写给已经在用 AI 编程工具（Cursor、Claude Code 等），但仍受困于“代码失控、反复返工、缺少系统方法论”的程序员。
 
-本书以 **SDD（Specification-Driven Development，规范驱动开发）** 为核心框架，以一个生产级的 Todo API 为贯穿案例，教你如何从“凭感觉敲代码（Vibe Coding）”的打字员，升级为“定规矩、审产出”的技术总监。
+本书以 **SDD（Specification-Driven Development，规范驱动开发）** 为核心框架，以一个生产级的 Todo API 为贯穿案例，教你如何从“凭感觉敲代码（Vibe Coding）”的程序员，升级为“定规矩、审产出”的技术负责人。
 
 ## 📖 核心内容
 
