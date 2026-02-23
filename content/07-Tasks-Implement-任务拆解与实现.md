@@ -134,28 +134,28 @@
 
 每个任务的实现遵循三步循环：**Test → Implement → Review**。
 
-1. **Test（写测试）**：定义完成标准。测试不通过则任务未完成。
+1. **Test（写测试）**：根据验收标准定义完成标准。
 2. **Implement（写实现）**：编写代码使所有测试变绿。
-3. **Review（审查）**：检查代码质量、架构规范及安全隐患。
+3. **Review（审查）**：检查代码质量、架构合规及安全隐患。
+
+这三步由 Agent 自动完成——你只需用一个提示词告诉 Agent 实现哪个任务，它会自行编写测试、实现功能并审查代码。你的职责是在 Agent 完成后审查最终结果，必要时给出反馈。
 
 ---
 
 ## 7.5 演示任务 A：创建 Todo
 
-> **前置条件**：假设 Task 1-7 已完成。以下演示标准的 Test → Implement → Review 流程。
+> **前置条件**：假设 Task 1-7 已完成。以下演示 Task 8 的完整实现过程。
 
-### 7.5.1 Test（核心思路→实操演示→审查要点）
+### 实操演示
 
-#### 核心思路
+> **你**：实现 Task 8（创建 Todo）。按 Test → Implement → Review 流程：先根据 @spec.md 编写 BDD 风格测试（覆盖正常创建、字段缺失、超长及未认证场景），再编写实现使测试通过，最后进行 Strict Diff 审查（对比 @plan.md，检查是否有过度设计）。遵循 @constitution.md。
 
-测试场景源自 `spec.md` 的验收标准。采用 BDD 风格（Given-When-Then）组织测试用例。
-
-#### 实操演示
-
-> **你**：为 Task 8（创建 Todo）编写测试。参考 @spec.md、@plan.md、@constitution.md 和 @tests/conftest.py，覆盖正常创建、字段缺失、超长及未认证等场景。
+Agent 会自动完成三步，以下是典型的产出：
 
 > AI 产出示例：
-> 
+>
+> **Step 1 — 编写测试**
+>
 > ```python
 > # tests/todo/test_create_todo.py
 > import pytest
@@ -177,180 +177,129 @@
 >         assert data["title"] == "买菜"
 >         assert "id" in data
 > ```
-
-#### 审查要点
-
-检查测试是否覆盖了正常与异常场景，断言是否包含关键字段（如 UUID 和状态），以及测试间是否独立。
-
-### 7.5.2 Implement（核心思路→实操演示→审查要点）
-
-#### 核心思路
-
-编写代码使测试通过，必须遵循 `constitution.md` 的架构原则与编码规范。
-
-#### 实操演示
-
-> **你**：实现 Task 8（创建 Todo）的功能代码，使 @tests/todo/test_create_todo.py 的所有测试通过。遵循 @plan.md 和 @constitution.md。
-
-> AI 产出示例：
-
-```python
-# src/todo/api/schemas.py
-from datetime import datetime
-from uuid import UUID
-from pydantic import BaseModel, Field, field_validator
-
-class TodoCreate(BaseModel):
-    title: str = Field(..., min_length=1, max_length=200)
-    description: str | None = Field(None, max_length=1000)
-
-    @field_validator("title")
-    @classmethod
-    def title_must_not_be_blank(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("标题不能为空")
-        return v.strip()
-
-class TodoResponse(BaseModel):
-    id: UUID
-    title: str
-    description: str | None
-    status: str
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = {"from_attributes": True}
-```
-
-```python
-# src/todo/application/todo_service.py
-from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.todo.domain.todo import Todo
-from src.todo.infrastructure.todo_repository import TodoRepository
-
-class TodoService:
-    def __init__(self, session: AsyncSession):
-        self.repository = TodoRepository(session)
-
-    async def create_todo(self, title: str, description: str | None, user_id: UUID) -> Todo:
-        todo = Todo(
-            title=title,
-            description=description,
-            status="pending",
-            user_id=user_id,
-        )
-        return await self.repository.save(todo)
-```
-
-#### 审查要点
-
-检查分层是否正确、类型注解是否完整（尤其注意 `user_id` 必须为 UUID）、`user_id` 的来源是否安全（必须由中间件解析，而非客户端传入）。
-
-### 7.5.3 Review（核心思路→实操演示→审查要点）
-
-#### 核心思路
-
-代码和测试都通过后，通过 Review 环节排查潜在的安全隐患和代码重构空间。
-
-#### 实操演示
-
-> **你**：审查 Task 8（创建 Todo）的代码，包括 schemas、service 和 routes。请将生成的代码与 `@plan.md` 进行反向对比审查（Strict Diff）。严格列出：1. 是否引入了未在 Plan 中声明的新库？2. 是否实现了未在 Plan 中定义的额外逻辑或过度设计（如过度封装、多余的中间件）？若存在，请标红警告并给出精简方案。同时检查安全隐患和边界情况遗漏。
-
-> AI 产出示例：
+>
+> **Step 2 — 编写实现**
+>
+> ```python
+> # src/todo/api/schemas.py
+> from datetime import datetime
+> from uuid import UUID
+> from pydantic import BaseModel, Field, field_validator
 > 
-> **代码审查结果**
+> class TodoCreate(BaseModel):
+>     title: str = Field(..., min_length=1, max_length=200)
+>     description: str | None = Field(None, max_length=1000)
+> 
+>     @field_validator("title")
+>     @classmethod
+>     def title_must_not_be_blank(cls, v: str) -> str:
+>         if not v.strip():
+>             raise ValueError("标题不能为空")
+>         return v.strip()
+> 
+> class TodoResponse(BaseModel):
+>     id: UUID
+>     title: str
+>     description: str | None
+>     status: str
+>     created_at: datetime
+>     updated_at: datetime
+> 
+>     model_config = {"from_attributes": True}
+> ```
+>
+> ```python
+> # src/todo/application/todo_service.py
+> from uuid import UUID
+> from sqlalchemy.ext.asyncio import AsyncSession
+> from src.todo.domain.todo import Todo
+> from src.todo.infrastructure.todo_repository import TodoRepository
+> 
+> class TodoService:
+>     def __init__(self, session: AsyncSession):
+>         self.repository = TodoRepository(session)
+> 
+>     async def create_todo(self, title: str, description: str | None, user_id: UUID) -> Todo:
+>         todo = Todo(
+>             title=title,
+>             description=description,
+>             status="pending",
+>             user_id=user_id,
+>         )
+>         return await self.repository.save(todo)
+> ```
+>
+> **Step 3 — 审查报告**
+>
 > ✅ 分层正确，用户 ID 从 Token 获取，输入校验覆盖全面。
 > ⚠️ **建议**：补充一个测试以确保创建成功后的 Todo 绑定的 `user_id` 确实是当前用户的 UUID。
 
-#### 审查要点
+### 审查要点
 
-采纳合理的审查建议并补充测试，确保代码严谨可靠。
+Agent 完成后，你需要审查：
+
+- **测试覆盖**：是否覆盖了正常与异常场景？断言是否包含关键字段（如 UUID 和状态）？测试间是否独立？
+- **实现质量**：分层是否正确？类型注解是否完整？`user_id` 的来源是否安全（必须由中间件解析，而非客户端传入）？
+- **Strict Diff**：是否引入了 Plan 中未声明的新库？是否存在过度设计（如过度封装、多余的中间件）？
+
+采纳合理的审查建议并要求 Agent 补充。
 
 ---
 
 ## 7.6 演示任务 B：用户注册
 
-### 7.6.1 Test（核心思路→实操演示→审查要点）
+用户注册涉及核心安全逻辑（密码哈希、Token），采用自底向上策略。与 Task 8 一样，只需一个提示词，但需要在提示中强调安全审查重点。
 
-#### 核心思路
+### 实操演示
 
-用户注册涉及核心的认证安全（AC-1 至 AC-4），需要严格遵循 `constitution.md` 的密码 bcrypt 哈希及响应不含密码要求。
+> **你**：实现 Task 4（用户注册）。按 Test → Implement → Review 流程，测试需覆盖正常注册、响应不含密码、邮箱重复、格式无效及密码短于 8 位等场景。重点审查密码处理安全性和并发场景。遵循 @constitution.md、@spec.md 和 @plan.md。
 
-#### 实操演示
-
-> **你**：为 Task 4（用户注册）编写测试。覆盖：正常注册、响应不含密码、邮箱重复、格式无效及密码短于 8 位等场景。结合 @constitution.md 与 @spec.md。
-
-> AI 产出示例：
-
-```python
-# tests/auth/test_register.py
-import pytest
-from httpx import AsyncClient
-
-@pytest.mark.asyncio
-class TestUserRegister:
-    async def test_register_response_excludes_password(self, client: AsyncClient):
-        """Given 正常注册, When 查看响应, Then 不包含 password 字段"""
-        response = await client.post(
-            "/api/v1/auth/register",
-            json={"email": "safe@test.com", "password": "secure123"},
-        )
-        data = response.json()
-        assert "password" not in data
-        assert "password_hash" not in data
-```
-
-#### 审查要点
-
-安全测试必须充分，检查边界测试数据是否精准。
-
-### 7.6.2 Implement（核心思路→实操演示→审查要点）
-
-#### 核心思路
-
-注册逻辑偏重底层，采用自底向上策略。需实现密码哈希、注册用例及 API 路由。
-
-#### 实操演示
-
-> **你**：实现 Task 4（用户注册），使相关测试通过。遵循 @constitution.md 和 @plan.md。
-
-> AI 产出示例：
-
-```python
-# src/auth/api/schemas.py
-from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field
-
-class RegisterResponse(BaseModel):
-    id: UUID
-    email: str
-    access_token: str
-    token_type: str = "bearer"
-```
-
-#### 审查要点
-
-确认密码哈希配置合规，响应模型不含密码字段，且用户 `id` 为 UUID 类型。
-
-### 7.6.3 Review（核心思路→实操演示→审查要点）
-
-#### 核心思路
-
-认证模块对安全性要求极高，需重点排查并发竞态条件等深层缺陷。
-
-#### 实操演示
-
-> **你**：审查 Task 4 的代码，重点关注密码处理、并发注册同一邮箱时的安全性。
-
-> AI 产出示例：
+> AI 产出示例（节选关键部分）：
+>
+> **Test**
+>
+> ```python
+> # tests/auth/test_register.py
+> import pytest
+> from httpx import AsyncClient
 > 
-> **安全审查结果**
+> @pytest.mark.asyncio
+> class TestUserRegister:
+>     async def test_register_response_excludes_password(self, client: AsyncClient):
+>         """Given 正常注册, When 查看响应, Then 不包含 password 字段"""
+>         response = await client.post(
+>             "/api/v1/auth/register",
+>             json={"email": "safe@test.com", "password": "secure123"},
+>         )
+>         data = response.json()
+>         assert "password" not in data
+>         assert "password_hash" not in data
+> ```
+>
+> **Implement**
+>
+> ```python
+> # src/auth/api/schemas.py
+> from uuid import UUID
+> from pydantic import BaseModel, EmailStr, Field
+> 
+> class RegisterResponse(BaseModel):
+>     id: UUID
+>     email: str
+>     access_token: str
+>     token_type: str = "bearer"
+> ```
+>
+> **Review**
+>
 > ⚠️ **并发竞态条件**：同时注册同一邮箱可能引发数据库 `IntegrityError`。建议在 `UserRepository` 中捕获并转换为 409 Conflict。
 
-#### 审查要点
+### 审查要点
 
-采纳 AI 建议增加异常捕获机制，提升系统健壮性。
+安全相关的任务，重点检查：
+- 密码哈希配置是否合规？响应模型是否不含密码字段？
+- 并发场景是否安全？邮箱唯一约束是否有数据库级保障？
+- 采纳 AI 建议增加异常捕获机制，提升系统健壮性。
 
 ---
 
@@ -397,7 +346,7 @@ Review 环节存在的意义正是为了捕获并纠正这些错误。
 2. **任务审查**：确保任务完全覆盖所有 FR 和 AC。
 
 **Implement 阶段**：
-1. **实现循环**：坚持 Test → Implement → Review 三步走。
+1. **实现循环**：每个任务用一个提示词启动，Agent 自动完成 Test → Implement → Review，你负责审查结果。
 2. **验收对照**：对照 spec 逐条验收，完成闭环。
 
 ### 产出物清单
