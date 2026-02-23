@@ -16,7 +16,7 @@ Plan 阶段产出：领域建模、数据模型、API 契约设计、目录结�
 
 ### 实操演示
 
-> **你**：基于 @spec.md 和 @constitution.md，识别核心领域对象。列出属性和关系，使用 Mermaid 类图表示。主键必须为 UUID。
+> **你**：基于 @spec.md 和 @constitution.md，识别核心领域对象。列出属性和关系，使用 Mermaid 类图表示。
 
 > **你**：补充细节：密码字段名为 `hashed_password`，`Todo` 增加 `deleted_at` 字段支持软删除。
 
@@ -79,7 +79,7 @@ Plan 阶段产出：领域建模、数据模型、API 契约设计、目录结�
 
 ### 审查要点
 
-确保越权访问严格返回 404（对齐 AC-4 等验收标准），数据验证失败严格返回 422 Unprocessable Entity（对齐 AC-2/3 等验证约束），且密码必须采用 bcrypt 哈希。
+确保越权访问严格返回 404（对齐 AC-4 等验收标准），数据验证失败严格返回 422 Unprocessable Entity（对齐 AC-2/3 等验证约束）。密码存储方案留到 6.7 安全实现方案中检查。
 
 ## 6.4 数据模型设计
 
@@ -89,7 +89,7 @@ Plan 阶段产出：领域建模、数据模型、API 契约设计、目录结�
 
 ### 实操演示
 
-> **你**：基于领域模型和 SQLAlchemy 2.0，设计数据库表结构。主键使用 UUID，表名使用 snake_case 复数形式。用 Mermaid ER 图表示。
+> **你**：基于领域模型和 @constitution.md 的编码规范，设计数据库表结构。用 Mermaid ER 图表示。
 
 > AI 产出示例：
 >
