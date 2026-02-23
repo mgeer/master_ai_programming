@@ -52,7 +52,7 @@
 
 > **你**：调整一下：
 > 1. 项目基础搭建（数据库连接、配置管理、目录创建）单独作为首个任务。
-> 2. 每个 API 端点作为一个独立任务，并在描述中引用 plan.md 的对应章节。
+> 2. 每个 API 端点作为一个独立任务。
 > 3. 认证中间件（get_current_user）和测试基础设施单独作为前置任务。
 > 4. 所有任务都依赖 Task 1 和 Task 2，认证任务要在 Todo CRUD 之前。
 
@@ -152,15 +152,7 @@
 
 #### 实操演示
 
-> **你**：为 Task 8（创建 Todo）编写测试。
-> 
-> 参考：
-> - 验收标准：@spec.md 的 AC-7, AC-9, AC-10, AC-11, AC-26 + FR-3（描述长度）
-> - API 契约：@plan.md 的 POST /api/v1/todos
-> - 测试规范：@constitution.md 的开发方法论（BDD 风格、pytest）
-> - 测试基础设施：@tests/conftest.py
-> 
-> 测试应覆盖正常创建、字段缺失、超长及未认证等场景。
+> **你**：为 Task 8（创建 Todo）编写测试。参考 @spec.md、@plan.md、@constitution.md 和 @tests/conftest.py，覆盖正常创建、字段缺失、超长及未认证等场景。
 
 > AI 产出示例：
 > 
@@ -198,12 +190,7 @@
 
 #### 实操演示
 
-> **你**：实现 Task 8（创建 Todo）的功能代码，使 @tests/todo/test_create_todo.py 的所有测试通过。
-> 
-> 参考：
-> - API 契约：@plan.md 的 POST /api/v1/todos
-> - 目录结构：@plan.md
-> - 编码规范：@constitution.md
+> **你**：实现 Task 8（创建 Todo）的功能代码，使 @tests/todo/test_create_todo.py 的所有测试通过。遵循 @plan.md 和 @constitution.md。
 
 > AI 产出示例：
 
@@ -326,7 +313,7 @@ class TestUserRegister:
 
 #### 实操演示
 
-> **你**：实现 Task 4（用户注册），使相关测试通过。严格遵循 @constitution.md 中 bcrypt cost=12 且响应模型使用 UUID 的要求。
+> **你**：实现 Task 4（用户注册），使相关测试通过。遵循 @constitution.md 和 @plan.md。
 
 > AI 产出示例：
 
