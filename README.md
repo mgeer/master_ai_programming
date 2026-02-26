@@ -6,26 +6,17 @@
 
 ## 目录
 
-### 前言
 - [前言](content/00-前言.md)
-
-### 第一部分：基础技能
 - [第 1 章：清晰表达 — 3C 要素](content/01-清晰表达-3C要素.md)
 - [第 2 章：多轮对话技巧](content/02-多轮对话技巧.md)
-
-### 第二部分：AI 工具进阶
 - [第 3 章：Agent — 自主执行](content/03-Agent.md)
 - [第 4 章：Token 管理](content/04-Token管理.md)
 - [第 5 章：AI Rules — 开发规范](content/05-AI-Rules开发规范.md)
-
-### 第三部分：规范驱动开发
 - [第 6 章：SDD 方法论](content/06-SDD方法论.md)
 - [第 7 章：SKILL — 可复用提示词](content/07-SKILL.md)
 - [第 8 章：MCP — 模型上下文协议](content/08-MCP.md)
 - [第 9 章：SDD 工具实战](content/09-SDD工具实战.md)
-
-### 附录
-- [延伸学习资源](content/10-附录-延伸学习资源.md)
+- [附录：延伸学习资源](content/10-附录-延伸学习资源.md)
 
 ## 阅读建议
 
