@@ -27,15 +27,75 @@ AI 没有真正的记忆。昨天告诉它"用 FastAPI"，今天开新对话它�
 
 ---
 
-## 5.3 案例
+## 5.3 案例：小明的重复劳动
 
-用一句话让 AI 生成初版 CLAUDE.md：
+小明的项目是 Python FastAPI + PostgreSQL 的后端服务，他同时在用 Claude Code 和公司里其他几个同事做 AI pair programming。
+
+**Before（没有规范文件）**
+
+每次开新对话，小明都要在开头交代一段背景：
+
+> 这是一个 Python FastAPI 项目，数据库用 PostgreSQL，ORM 用 SQLAlchemy，测试框架用 pytest。代码风格遵循 PEP 8，不要用 print 调试，不要改我没提到的代码……
+
+这段话他打了不下二十遍。更糟的是，偶尔忘了说，AI 就给出一个用 Flask + SQLite 的方案，他还得再解释一遍。
+
+**After（有了 CLAUDE.md）**
+
+小明在项目根目录创建了 `CLAUDE.md`，内容如下：
+
+```markdown
+# 项目规范
+
+## 技术栈
+- 语言：Python 3.11+
+- Web 框架：FastAPI
+- 数据库：PostgreSQL 15，ORM 使用 SQLAlchemy 2.0
+- 测试：pytest + httpx（异步测试）
+- 包管理：uv
+
+## 目录结构
+- app/routers/    # 路由层，每个资源一个文件
+- app/models/     # SQLAlchemy 数据模型
+- app/schemas/    # Pydantic 请求/响应模型
+- app/services/   # 业务逻辑层
+- tests/          # 测试，结构镜像 app/
+
+## 编码规范
+- 遵循 PEP 8，行宽 88（black 格式化）
+- 类型注解：所有公开函数必须有完整类型注解
+- 禁止使用 print 调试，使用 logging 模块
+
+## AI 行为约束
+- 只修改被明确提到的文件，不要"顺手"重构其他代码
+- 禁止引入新的第三方依赖，除非我明确要求
+- 写代码时同步在 tests/ 下生成对应测试
+- 如果用户直接粘贴了大段代码，提醒他们改用 @文件名 引用
+```
+
+从此，小明开新对话时什么都不用说。AI 自动按这份规范工作。
+
+**对比：同一个需求，有无规范的区别**
+
+需求：「添加用户注册接口」
+
+| | 无 CLAUDE.md | 有 CLAUDE.md |
+|---|---|---|
+| 框架 | 可能给 Flask 实现 | 直接给 FastAPI 实现 |
+| 文件位置 | 随意放 | 自动放进 `app/routers/users.py` |
+| 测试 | 不写 | 自动生成 `tests/test_users.py` |
+| 类型注解 | 视心情 | 所有函数带完整类型注解 |
+
+CLAUDE.md 写好之后，小明意识到他可以彻底忘掉"开头交代背景"这件事——规范文件就是 AI 的长期记忆，写一次，每次对话自动生效。
+
+---
+
+**从零生成初版 CLAUDE.md**
+
+如果你还没有规范文件，用一句话让 AI 生成初版：
 
 > 我的项目是 Python FastAPI 后端 + PostgreSQL。帮我生成一份 CLAUDE.md，包含：技术栈说明、主要目录结构、编码规范（PEP 8）、AI 行为约束（禁止过度设计、修改代码时只改相关部分）。
 
-AI 生成初版后，根据实际情况多轮追问完善：加安全要求、加测试规范、加你上一章写好的 3 条 token 节省规则。
-
-有 CLAUDE.md vs 无 CLAUDE.md 的差异：同一个"添加用户登录功能"的需求，有规范文件时 AI 直接给出符合项目技术栈的实现；无规范文件时 AI 可能用完全不同的框架或风格。
+生成后根据实际情况多轮追问完善：加安全要求、加测试规范、加 token 节省规则（如"始终用 @ 引用文件"）。
 
 ---
 

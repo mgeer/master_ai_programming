@@ -20,13 +20,54 @@ Agent = 大模型 + 工具 + 自主循环。工具赋予 AI 真正的"行动能�
 
 ---
 
-## 3.3 案例
+## 3.3 案例：小明的测试修复
 
-在 Claude Code 中直接描述任务目标即可——无需特殊启动命令，Claude Code 本身就运行在 Agent 模式下：
+小明在公司电商系统里负责维护折扣计算模块。周五下午，CI 流水线突然报红——`calculate_discount()` 的测试挂掉了。
 
-交给 Agent："为 `calculate_discount()` 函数补全单元测试，并确保全部通过"
+**Before（以前的做法）**
 
-Agent 自主读代码、写测试、运行 `pytest`、定位 bug、修复、验证通过——全程无需人工干预。这是 AI 编程从"生成代码"到"完成任务"的质变。
+小明切到终端，跑 `pytest`：
+
+```
+FAILED tests/test_discount.py::test_bulk_discount - AssertionError: 0.15 != 0.2
+```
+
+他盯着错误看了一会儿，不确定是测试写错了还是函数本身有 bug。打开 `discount.py`，翻了一遍逻辑，又打开 `test_discount.py` 对比。发现是批量折扣的边界条件——数量 ≥10 件时折扣率计算有问题。改了代码，再跑，又挂了另一个测试。再查，再改，来回三轮，20 分钟过去了。
+
+**After（Agent 模式）**
+
+同样的问题，小明在 Claude Code 里说了一句话：
+
+> 为 `calculate_discount()` 函数补全单元测试，确保全部通过。
+
+然后他去倒了杯水。回来看到 Claude 的操作记录：
+
+```
+● Read(discount.py)
+  读取折扣计算函数，发现批量折扣逻辑：数量 ≥10 时应返回 20% 折扣
+
+● Read(tests/test_discount.py)
+  现有 3 个测试，缺少批量折扣边界条件的覆盖
+
+● Edit(tests/test_discount.py)
+  新增 test_bulk_discount_boundary 测试用例
+
+● Bash(pytest tests/test_discount.py)
+  FAILED test_bulk_discount - 期望 0.20，实际返回 0.15
+
+● Read(discount.py)
+  定位问题：第 23 行条件判断用了 > 而非 >=，漏掉了恰好 10 件的情况
+
+● Edit(discount.py)
+  将 if quantity > 10 改为 if quantity >= 10
+
+● Bash(pytest tests/test_discount.py)
+  5 passed in 0.31s ✓
+```
+
+整个过程 47 秒。
+
+Claude 的终端不是"显示输出"的窗口——它是 Claude 的工作台。它读文件、改代码、跑命令、看结果，这个循环完全自主进行。你只需要说清楚目标，不需要告诉它每一步怎么做。
 
 ---
 
