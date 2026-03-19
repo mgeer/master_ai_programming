@@ -44,26 +44,11 @@ AI 改了一版，但架构需要大调整——原来的表结构没有预留�
 
 Vibe Coding 的问题不在于"用 AI"，而在于把决策权交给了 AI，同时没有任何持久化记录——AI 只能猜，猜错就返工，每次返工都从零开始。SDD 把决策显式化、文档化，把执行交给 AI。
 
----
-
-## 6.3 最小化实践：PDCA 循环
-
-SDD 是理念，不绑定工具。用文本编辑器手写规范文档就能落地：
-
-```
-Plan  → 写需求规范（做什么、不做什么）；和 AI 澄清边界
-Do    → 技术设计 + 拆分任务 + AI 执行
-Check → 对照规范检查代码
-Act   → 修复偏差，归档，进入下一轮
-```
-
-关键是在 **Plan 阶段**写清楚「不做什么」——范围不清是翻车最常见的原因。先写规范的过程本身会暴露需求漏洞，比如「游客能否查看评论」这类遗漏，在动手前澄清比实现后返工代价小得多。
-
-上面这套流程可以纯手动执行。下一节用 OpenSpec 工具自动化它。OpenSpec 的 explore 命令专门服务于 Plan 阶段——帮你在动手前把漏洞逼出来。
+SDD 不绑定工具——用文本编辑器手写规范文档也能落地。下面以 OpenSpec 为例演示完整流程。
 
 ---
 
-## 6.4 OpenSpec 工具实战
+## 6.3 OpenSpec 工具实战
 
 ### 安装与配置
 
@@ -72,9 +57,6 @@ OpenSpec 是一个 CLI 工具，核心是一套 Skill 文件。
 ```bash
 # 全局安装
 npm install -g @fission-ai/openspec
-
-# 配置扩展工作流（交互式，选择包含 new/continue 等命令的配置）
-openspec config profile
 
 # 在项目根目录初始化，将 Skill 文件安装到 .claude/skills/
 openspec init --tools claude
@@ -165,70 +147,48 @@ AI 没有立刻说"好的，我来帮你实现"，而是先把问题的形状画
 
 Explore 没有副作用——不写代码、不强制产出文档、不催你做决定，随时可进、随时可退。它是一种思维模式，不是流程里的一个步骤，不只是开始阶段才能用，实现到一半发现问题时也可以随时回来。
 
-> 每次进 explore，都像是有个经验丰富的工程师坐在你旁边，帮你把问题想透再动手。
+> 每次进 explore，都像是有个教练坐在你旁边，帮你把问题想透再动手。
 
-### 扩展工作流
+### 从 Explore 到落地
 
-OpenSpec 的扩展工作流把 PDCA 拆成一组命令。先理解三个核心工件的关系——顺序是 **proposal → design → spec**：
-
-| 工件 | 回答什么问题 | 性质 |
-|------|-------------|------|
-| **Proposal（提案）** | 为什么做？做什么？影响范围？ | 问题定义 + 范围界定 |
-| **Design（设计）** | 怎么做？架构决策是什么？ | 技术方案 + 关键决策 |
-| **Spec（规格）** | 做到什么程度算「做完了」？ | 可验证的验收标准 |
-
-类比理解：Proposal ≈ PRD，Design ≈ 架构设计文档，Spec ≈ 验收标准。
-
-**命令与工件依赖：**
+Explore 帮你想清楚之后，三个命令走完剩下的流程：
 
 | 命令 | 作用 |
 |------|------|
-| `/opsx:explore` | 先和 AI 双向对齐：发现盲区、厘清思路，不写代码、不强制产出 |
-| `/opsx:new` | 创建变更目录，初始化工件结构 |
-| `/opsx:continue` | 生成下一个工件（依次：proposal → design → spec → tasks） |
+| `/opsx:propose` | 一步生成全部文档（proposal、design、spec、tasks），供人审查 |
 | `/opsx:apply` | 按任务清单逐条实现代码，完成一条打勾一条 |
 | `/opsx:archive` | 归档完成的变更，清理工作目录 |
 
-```
-proposal → design → spec → tasks → apply → archive
-```
+Propose 一步生成四份文档：
 
-工件驱动的关键：每个阶段产出明确的文档，下一步以上一步的文档为输入——不依赖对话记忆。
+| 文档 | 回答什么问题 |
+|------|-------------|
+| proposal | 做什么、不做什么 |
+| design | 怎么做、关键决策 |
+| spec | 做到什么程度算完（基于 design 决策转化为可验证标准） |
+| tasks | 拆成哪些任务 |
 
-> **Spec 依赖 Design**：Spec 不是收集用户原始需求的地方，而是把 Design 的决策转化为可验证的规格。例如 Design 决定了「软删除」，Spec 才写「SHALL 包含 deleted_at 字段」。先有设计决策，才有验收标准。
+人工审查确认后，`/opsx:apply` 逐条实现，`/opsx:archive` 归档收尾。
 
 ---
 
 ### 案例：为博客系统添加评论功能
 
-以小明的案例为例，用扩展工作流重来一遍。
+以小明的案例为例，用完整流程重来一遍。
 
-**Step 1：探索需求**
+**Step 1：Explore 想清楚**
 
-```
-/opsx:explore 想给博客加评论功能
-```
+小明用 `/opsx:explore` 和 AI 做了上面那段对话，厘清了游客权限、账号注销、软删除一致性等边界。带着这份共识进入下一步。
 
-几分钟对话，厘清了游客权限、账号注销处理、软删除一致性等边界。带着这份共识进入下一步，后续返工大幅减少。
-
-**Step 2：创建变更**
+**Step 2：Propose 生成文档**
 
 ```
-/opsx:new add-comment-feature
+/opsx:propose add-comment-feature
 ```
 
-在 `openspec/changes/add-comment-feature/` 创建变更目录，等待生成工件。
+一步生成全部文档。以下是关键片段：
 
-**Step 3：逐步生成工件（continue × 4）**
-
-```
-/opsx:continue   # 生成 proposal.md（变更意图与范围）
-/opsx:continue   # 生成 design.md（技术设计）
-/opsx:continue   # 生成 spec（可验证的验收规格，基于 design 决策）
-/opsx:continue   # 生成 tasks.md（任务清单）
-```
-
-`proposal.md` 示例片段（问题与范围）：
+`proposal.md`（做什么、不做什么）：
 
 ```markdown
 ## 为什么做
@@ -239,7 +199,7 @@ proposal → design → spec → tasks → apply → archive
 - 不做：嵌套回复、审核机制、匿名评论
 ```
 
-`design.md` 示例片段（技术决策）：
+`design.md`（技术决策）：
 
 ```markdown
 ## 数据模型
@@ -250,7 +210,7 @@ comments 表：id, article_id, user_id, content, created_at, deleted_at
 - API：POST /articles/:id/comments、DELETE /comments/:id（含权限校验）
 ```
 
-`spec` 示例片段（可验证验收标准，由 design 转化而来）：
+`spec`（可验证验收标准，由 design 决策转化而来）：
 
 ```markdown
 ### Requirement: 评论发表
@@ -261,28 +221,19 @@ comments 表：id, article_id, user_id, content, created_at, deleted_at
 - THEN 系统创建评论记录并返回 201
 ```
 
-**Step 4（关键）：人工审查 design 与 spec**
+**Step 3（关键）：人工审查**
 
 小明读 design 和 spec，确认技术决策和验收条款一致、没有遗漏。发现问题直接编辑文档——决策在文档里做，不让 AI 猜。
 
-**Step 5：实现**
+比如：spec 里写了「SHALL 支持评论编辑」，但 design 里没有编辑相关的 API 和数据模型。这就是不一致——要么补 design，要么从 spec 里删掉这条。改文档只需几秒，改代码要几个小时。
+
+**Step 4：实现与归档**
 
 ```
 /opsx:apply
 ```
 
-AI 按任务清单逐条实现，完成一条打勾一条：
-
-```
-- [x] 建 comments 数据库迁移文件
-- [x] 实现 Comment 数据模型
-- [x] 实现 POST /articles/:id/comments 接口
-- [x] 实现 DELETE /comments/:id 接口（含权限校验）
-- [x] 在文章详情页展示评论列表
-- [x] 编写接口测试
-```
-
-**Step 6：归档**
+AI 按任务清单逐条实现，完成一条打勾一条。全部完成后：
 
 ```
 /opsx:archive
@@ -292,7 +243,7 @@ AI 按任务清单逐条实现，完成一条打勾一条：
 
 ---
 
-## 6.5 要点
+## 6.4 要点
 
 - **先 explore 再动手**：不管需求是否清晰，先和 AI 双向对齐——盲区在对话里解决比实现后返工代价小得多
 - **规范的最低标准**：写了「不做什么」就算合格——大多数翻车源于范围不清
@@ -301,13 +252,12 @@ AI 按任务清单逐条实现，完成一条打勾一条：
 
 ---
 
-## 6.6 本章小结
+## 6.5 本章小结
 
 - SDD = 先写规范，人决策，AI 执行
-- 最简实践：Plan（需求规范 + 澄清边界）→ Do（技术设计 + 拆任务 + AI 执行）→ Check（对照规范）→ Act
-- OpenSpec 把上述流程工具化：先 explore（双向对齐）→ new → continue（proposal → design → spec → tasks）→ apply → archive
+- OpenSpec 流程：explore（想清楚）→ propose（生成文档，供人审查）→ apply（实现）→ archive（归档）
 - 核心不变：决策显式化，不依赖对话记忆，不让 AI 猜
 
-**练习**：用 OpenSpec 为你当前项目的一个真实小需求走一遍流程：`/opsx:explore` 探索需求，`/opsx:new` 创建变更，`/opsx:continue` 依次生成 proposal、design、spec、tasks，完成 design 与 spec 的人工审查。
+**练习**：用 OpenSpec 为你当前项目的一个真实小需求走一遍流程：`/opsx:explore` 探索需求，`/opsx:propose` 生成文档，完成 design 与 spec 的人工审查。
 
 **下一章预告**：`/opsx:*` 这类斜杠命令底层是 SKILL 文件。下一章介绍 SKILL 机制，你将学会为自己的项目创建定制化的斜杠命令。
